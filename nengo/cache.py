@@ -634,12 +634,13 @@ class DecoderCache(object):
         """
 
         def cached_solver(solver, neuron_type, gain, bias, x, targets,
-                          rng=None, E=None):
+                          rng=None, E=None, **uncached_kwargs):
             if not self._in_context:
                 warnings.warn("Cannot use cached solver outside of "
                               "`with cache` block.")
                 return solver_fn(
-                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E)
+                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E,
+                    **uncached_kwargs)
 
             try:
                 args, _, _, defaults = inspect.getargspec(solver)
@@ -657,7 +658,8 @@ class DecoderCache(object):
             except FingerprintError as e:
                 logger.debug("Failed to generate cache key: %s", e)
                 return solver_fn(
-                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E)
+                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E,
+                    **uncached_kwargs)
 
             try:
                 path, start, end = self._index[key]
@@ -669,7 +671,8 @@ class DecoderCache(object):
             except:
                 logger.debug("Cache miss [%s].", key)
                 decoders, solver_info = solver_fn(
-                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E)
+                    solver, neuron_type, gain, bias, x, targets, rng=rng, E=E,
+                    **uncached_kwargs)
                 if not self.readonly:
                     fd = self._get_fd()
                     start = fd.tell()
